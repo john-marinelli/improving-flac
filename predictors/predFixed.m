@@ -1,9 +1,9 @@
-function [xhat, nonResBits, p] = predFixed(x, params)
+function [xhat, p] = predFixed(x)
 assert(iscolumn(x), 'predFixed: x must be a column vector');
 N = numel(x);
 
 e = x;
-bestBits = inf;
+bestErr = inf;
 
 for order = 0:min(4, N-1)
     % Repeated differences create the binomial coefficients
@@ -12,15 +12,14 @@ for order = 0:min(4, N-1)
         e = diff(e);
     end
 
-    bits = scoreResidual(e, order*params.bitsPerRawSample);
+    err = mean(abs(e));
 
-    if bits < bestBits
-        bestBits = bits;
+    if err < bestErr
+        bestErr = err;
         p = order;
         eBest = e;
     end
 end
 
 xhat = [nan(p,1); x(p+1:end) - eBest];
-nonResBits = p * params.bitsPerRawSample;
 end

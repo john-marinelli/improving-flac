@@ -8,9 +8,8 @@ addpath(fullfile(root, 'utils'), ...
 file = 'test.wav';
 N = 4096;
 
-[x, fs, bps] = loadAudio(fullfile(root, 'data', 'testSine.wav'));
+[x, fs] = loadAudio(fullfile(root, 'data', 'testSine.wav'));
 x = x(:, 1);
-params.bitsPerRawSample = bps;
 
 blocks = splitBlocks(x(:,1), N);
 
@@ -19,8 +18,8 @@ lpcErrs = zeros(numel(blocks), 1);
 
 for b = 1:numel(blocks)
     blk = blocks{b};
-    [xhatF, ~, pF] = predFixed(blk, params);
-    [xhatL, ~, pL] = predLPC(blk, params);
+    [xhatF, pF] = predFixed(blk);
+    [xhatL, pL] = predLPC(blk);
     eF = blk(pF+1:end) - round(xhatF(pF+1:end));
     fixedErrs(b) = mean(abs(eF));
     eL = blk(pL+1:end) - round(xhatL(pL+1:end));
@@ -33,4 +32,4 @@ t = 1:numel(blocks);
 plot(t, fixedErrs, t, lpcErrs);
 legend('fixed', 'LPC');
 xlabel('block');
-ylabel('error');
+ylabel('mean absolute error');

@@ -1,15 +1,6 @@
-function [xhat, nonResBits, p] = predLPC(x, params)
+function [xhat, p] = predLPC(x)
 
 assert(iscolumn(x), 'predLPC: x must be a column vector');
-
-% These are book keeping fields in the header of
-% an LPC block that aren't required in fixed
-% COEFF_FIELD_BITS tells FLAC how many bits the
-% coefficients use, this corresponds to coeffPrecision
-% SHIFT_BITS holds how many bits the result needs to be
-% shifted when decoding
-COEFF_FIELD_BITS = 4;
-SHIFT_BITS = 5;
 
 N = numel(x);
 maxOrder = min(32, N-1);
@@ -28,8 +19,7 @@ end
 
 p = 0;
 xhat = zeros(N, 1);
-nonResBits = 0;
-bestBits = scoreResidual(x, 0);
+bestErr = mean(abs(x));
 % if we have an autocorrelation of 0 for x with itself,
 % we have all zeros, or a squared norm of 0
 if r(1) == 0, return; end
@@ -54,15 +44,11 @@ for order = 1:maxOrder
     pred = filter([0; a], 1, x);
     % compare only the non-warm-up samples
     e = x(order+1:end) - round(pred(order+1:end));
+    err = mean(abs(e));
 
-    nonRes = order*params.bitsPerRawSample + COEFF_FIELD_BITS ...
-        + SHIFT_BITS + order*params.coeffPrecision;
-    bits = scoreResidual(e, nonRes);
-
-    if bits < bestBits
-        bestBits = bits;
+    if err < bestErr
+        bestErr = err;
         p = order;
-        nonResBits = nonRes;
         xhat = [nan(order,1); pred(order+1:end)];
     end
 end
